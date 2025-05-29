@@ -18,48 +18,48 @@ class SummariesHandler {
 
     const response = h.response({
       status: 'success',
-      message: 'Ringkasan berhasil dibuat',
+      message: 'The summary has been successfully created.',
       data: summary,
     });
     response.code(201);
     return response;
   }
 
-  getSummariesHandler() {
-    const summaries = this._service.getSummaries();
+  async getSummariesHandler() {
+    const summaries = await this._service.getSummaries();
     return {
       status: 'success',
       data: summaries,
     };
   }
 
-  getSummaryByIdHandler(request) {
+  async getSummaryByIdHandler(request) {
     const { id } = request.params;
-    const summary = this._service.getSummaryById(id);
+    const summary = await this._service.getSummaryById(id);
     return {
       status: 'success',
       data: summary,
     };
   }
 
-  putSummaryByIdHandler(request) {
+  async putSummaryByIdHandler(request) {
     this._validator.validatePutSummaryPayload(request.payload);
     const { id } = request.params;
 
-    this._service.editSummaryById(id, request.payload);
+    await this._service.editSummaryById(id, request.payload);
 
     return {
       status: 'success',
-      message: 'Ringkasan berhasil diperbarui',
+      message: 'The summary has been successfully updated.',
     };
   }
 
-  deleteSummaryByIdHandler(request) {
+  async deleteSummaryByIdHandler(request) {
     const { id } = request.params;
-    this._service.deleteSummaryById(id);
+    await this._service.deleteSummaryById(id);
     return {
       status: 'success',
-      message: 'Ringkasan berhasil dihapus',
+      message: 'The summary has been successfully deleted.',
     };
   }
 }

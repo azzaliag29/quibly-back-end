@@ -1,12 +1,11 @@
 const Hapi = require('@hapi/hapi');
+const mongodb = require('hapi-mongodb');
 const summaries = require('./api/summaries');
 const SummariesValidator = require('./validator/summaries');
 const ClientError = require('./exceptions/ClientError');
-const SummariesService = require('./services/inMemory/SummariesService');
+const SummariesService = require('./services/database/SummariesService');
 
 const init = async () => {
-  const summariesService = new SummariesService();
-
   const server = Hapi.server({
     port: 5000,
     host: process.env.NODE_ENV !== 'production' ? 'localhost' : '0.0.0.0',
@@ -17,13 +16,29 @@ const init = async () => {
     },
   });
 
-  await server.register({
-    plugin: summaries,
-    options: {
-      service: summariesService,
-      validator: SummariesValidator,
+  const dbOpts = {
+    url: 'mongodb+srv://azzaliag29:azzaliagusnadi@ai-summary-cluster.bwgjlyf.mongodb.net/Quibly?retryWrites=true&w=majority&appName=ai-summary-cluster',
+    decorate: true,
+  };
+
+  await server.register(
+    {
+      plugin: mongodb,
+      options: dbOpts,
     },
-  });
+  );
+
+  const summariesService = new SummariesService(server.mongo.db, server.mongo.ObjectID);
+
+  await server.register(
+    {
+      plugin: summaries,
+      options: {
+        service: summariesService,
+        validator: SummariesValidator,
+      },
+    },
+  );
 
   /* Extension function adalah salah satu fitur yang ada di objek server Hapi untuk
   menambahkan sebuah aksi (berupa fungsi) pada siklus (lifecycle) tertentu. */
