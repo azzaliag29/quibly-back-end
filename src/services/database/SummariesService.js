@@ -1,4 +1,3 @@
-/* eslint-disable linebreak-style */
 const pdf = require('pdf-parse');
 const { extractTitleFromText, generateSummary, generateKeywords } = require('../../utils/utils');
 const InvariantError = require('../../exceptions/InvariantError');

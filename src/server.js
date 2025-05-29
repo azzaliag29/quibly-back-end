@@ -1,9 +1,13 @@
+require('dotenv').config();
 const Hapi = require('@hapi/hapi');
 const mongodb = require('hapi-mongodb');
 const summaries = require('./api/summaries');
+const messages = require('./api/messages');
 const SummariesValidator = require('./validator/summaries');
+const MessagesValidator = require('./validator/messages');
 const ClientError = require('./exceptions/ClientError');
 const SummariesService = require('./services/database/SummariesService');
+const MessagesService = require('./services/database/MessagesServices');
 
 const init = async () => {
   const server = Hapi.server({
@@ -17,7 +21,7 @@ const init = async () => {
   });
 
   const dbOpts = {
-    url: 'mongodb+srv://azzaliag29:azzaliagusnadi@ai-summary-cluster.bwgjlyf.mongodb.net/Quibly?retryWrites=true&w=majority&appName=ai-summary-cluster',
+    url: process.env.DB_URI,
     decorate: true,
   };
 
@@ -29,8 +33,9 @@ const init = async () => {
   );
 
   const summariesService = new SummariesService(server.mongo.db, server.mongo.ObjectID);
+  const messagesService = new MessagesService(server.mongo.db);
 
-  await server.register(
+  await server.register([
     {
       plugin: summaries,
       options: {
@@ -38,7 +43,14 @@ const init = async () => {
         validator: SummariesValidator,
       },
     },
-  );
+    {
+      plugin: messages,
+      options: {
+        service: messagesService,
+        validator: MessagesValidator,
+      },
+    },
+  ]);
 
   /* Extension function adalah salah satu fitur yang ada di objek server Hapi untuk
   menambahkan sebuah aksi (berupa fungsi) pada siklus (lifecycle) tertentu. */
