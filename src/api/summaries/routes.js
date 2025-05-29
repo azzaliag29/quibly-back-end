@@ -27,15 +27,6 @@ const routes = (handler) => [
     method: 'PUT',
     path: '/summaries/{id}',
     handler: handler.putSummaryByIdHandler,
-    options: {
-      payload: {
-        maxBytes: 1048576 * 10,
-        output: 'data',
-        parse: true,
-        multipart: true,
-        allow: 'multipart/form-data',
-      },
-    },
   },
   {
     method: 'DELETE',

@@ -1,5 +1,3 @@
-const { parsePdf, extractTitleFromText } = require('../../utils/utils');
-
 class SummariesHandler {
   constructor(service, validator) {
     this._service = service;
@@ -14,19 +12,9 @@ class SummariesHandler {
 
   async postSummaryHandler(request, h) {
     this._validator.validatePostSummaryPayload(request.payload);
-    const { language } = request.payload;
-    let { originalContent } = request.payload;
-    let title;
+    const { language, originalContent } = request.payload;
 
-    if (originalContent instanceof Buffer) {
-      const { text, extractedTitle } = await parsePdf(originalContent);
-      originalContent = text;
-      title = extractedTitle;
-    } else {
-      title = extractTitleFromText(originalContent);
-    }
-
-    const summary = this._service.createSummary({ title, originalContent, language });
+    const summary = await this._service.createSummary({ language, originalContent });
 
     const response = h.response({
       status: 'success',

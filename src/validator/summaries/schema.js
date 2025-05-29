@@ -1,13 +1,16 @@
 const Joi = require('joi');
 
 const PostSummaryPayloadSchema = Joi.object({
-  language: Joi.binary().required(),
-  originalContent: Joi.binary().required(),
+  language: Joi.string().valid('id', 'en').required(),
+  originalContent: Joi.alternatives().try(
+    Joi.string().min(10),
+    Joi.object(),
+  ).required(),
 });
 
 const PutSummaryPayloadSchema = Joi.object({
-  summary: Joi.binary().required(),
-  title: Joi.binary().required(),
+  summary: Joi.string().required(),
+  title: Joi.string().required(),
 });
 
 module.exports = { PostSummaryPayloadSchema, PutSummaryPayloadSchema };

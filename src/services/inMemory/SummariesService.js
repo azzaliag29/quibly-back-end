@@ -1,4 +1,6 @@
 const { nanoid } = require('nanoid');
+const pdf = require('pdf-parse');
+const { extractTitleFromText, generateSummary, generateKeywords } = require('../../utils/utils');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 
@@ -9,14 +11,27 @@ class SummariesService {
 
   // Summary di proses dulu baru di simpan
 
-  createSummary({ title, originalContent, language }) {
+  async createSummary({ language, originalContent }) {
     const id = nanoid(16);
     const savedAt = new Date().toISOString();
-    const keywords = 1;
-    const summary = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
+
+    let parsedText;
+    let title;
+
+    if (originalContent instanceof Buffer) {
+      const { text, info } = await pdf(originalContent);
+      parsedText = text;
+      title = info?.Title || extractTitleFromText(text);
+    } else {
+      parsedText = originalContent;
+      title = extractTitleFromText(originalContent);
+    }
+
+    const summary = generateSummary(parsedText);
+    const keywords = generateKeywords(parsedText);
 
     const newSummary = {
-      id, language, title, originalContent, summary, keywords, savedAt,
+      id, language, title, originalContent: parsedText, summary, keywords, savedAt,
     };
 
     this._summaries.push(newSummary);
