@@ -1,5 +1,7 @@
 const pdf = require('pdf-parse');
-const { extractTitleFromText, generateSummary, generateKeywords } = require('../../utils/utils');
+const {
+  extractTitleFromText, generateIdSummary, generateEnSummary, generateKeywords,
+} = require('../../utils/utils');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 
@@ -15,6 +17,7 @@ class SummariesService {
 
     let parsedText;
     let title;
+    let summary;
 
     if (originalContent instanceof Buffer) {
       const { text, info } = await pdf(originalContent);
@@ -25,7 +28,12 @@ class SummariesService {
       title = extractTitleFromText(originalContent);
     }
 
-    const summary = generateSummary(parsedText);
+    if (language === 'id') {
+      summary = generateIdSummary(parsedText);
+    } else {
+      summary = generateEnSummary(parsedText);
+    }
+
     const keywords = generateKeywords(parsedText);
 
     const newSummary = {

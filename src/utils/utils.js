@@ -3,8 +3,14 @@ function extractTitleFromText(text) {
   return sentences.slice(0, 1).join(' ').slice(0, 100) || 'Untitled';
 }
 
-function generateSummary(text) {
-  return `${text.slice(0, 300)}...`; // dummy
+function generateIdSummary(text) {
+  // untuk demo
+  return `Ringkasan (ID): ${text.slice(0, 50)}...`;
+}
+
+function generateEnSummary(text) {
+  // untuk demo
+  return `Summary (EN): ${text.slice(0, 50)}...`;
 }
 
 function generateKeywords(text) {
@@ -22,5 +28,5 @@ function generateKeywords(text) {
 }
 
 module.exports = {
-  extractTitleFromText, generateSummary, generateKeywords,
+  extractTitleFromText, generateIdSummary, generateEnSummary, generateKeywords,
 };
