@@ -7,7 +7,7 @@ const SummariesValidator = require('./validator/summaries');
 const MessagesValidator = require('./validator/messages');
 const ClientError = require('./exceptions/ClientError');
 const SummariesService = require('./services/database/SummariesService');
-const MessagesService = require('./services/database/MessagesServices');
+const MessagesService = require('./services/database/MessagesService');
 
 const init = async () => {
   const server = Hapi.server({

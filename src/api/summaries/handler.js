@@ -29,7 +29,9 @@ class SummariesHandler {
     const summaries = await this._service.getSummaries();
     return {
       status: 'success',
-      data: summaries,
+      data: {
+        summaries,
+      },
     };
   }
 
@@ -38,7 +40,9 @@ class SummariesHandler {
     const summary = await this._service.getSummaryById(id);
     return {
       status: 'success',
-      data: summary,
+      data: {
+        summary,
+      },
     };
   }
 

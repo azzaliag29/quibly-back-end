@@ -1,7 +1,7 @@
 const pdf = require('pdf-parse');
 const {
   extractTitleFromText, generateIdSummary, generateEnSummary, generateKeywords,
-} = require('../../utils/utils');
+} = require('../../utils');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 
@@ -46,7 +46,7 @@ class SummariesService {
       throw new InvariantError('Failed to create summary');
     }
 
-    const id = result.insertedId;
+    const id = result.insertedId.toString();
 
     return {
       id,
@@ -57,7 +57,10 @@ class SummariesService {
 
   async getSummaries() {
     const result = await this._db.collection('summaries').find({}).toArray();
-    return result;
+    return result.map(({ _id, ...rest }) => ({
+      id: _id.toString(),
+      ...rest,
+    }));
   }
 
   async getSummaryById(id) {
@@ -65,7 +68,11 @@ class SummariesService {
     if (!result) {
       throw new NotFoundError('Summary not found');
     }
-    return result;
+    const { _id, ...rest } = result;
+    return {
+      id: _id.toString(),
+      ...rest,
+    };
   }
 
   async editSummaryById(id, { title, summary }) {
