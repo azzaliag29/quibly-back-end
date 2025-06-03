@@ -11,7 +11,6 @@ class SummariesService {
     this._ObjectID = ObjectID;
   }
 
-  // Summary di proses dulu baru di simpan
   async createSummary({ language, originalContent }) {
     const savedAt = new Date().toISOString();
 
@@ -42,11 +41,11 @@ class SummariesService {
 
     const result = await this._db.collection('summaries').insertOne(newSummary);
 
-    if (!result.acknowledged) {
+    if (!result.insertedId) {
       throw new InvariantError('Failed to create summary');
     }
 
-    const id = result.insertedId.toString();
+    const id = result.insertedId;
 
     return {
       id,
@@ -56,7 +55,8 @@ class SummariesService {
   }
 
   async getSummaries() {
-    const result = await this._db.collection('summaries').find({}).toArray();
+    const result = await this._db.collection('summaries').find({}).sort({ savedAt: -1 }).toArray();
+
     return result.map(({ _id, ...rest }) => ({
       id: _id.toString(),
       ...rest,
@@ -65,10 +65,13 @@ class SummariesService {
 
   async getSummaryById(id) {
     const result = await this._db.collection('summaries').findOne({ _id: new this._ObjectID(id) });
+
     if (!result) {
       throw new NotFoundError('Summary not found');
     }
+
     const { _id, ...rest } = result;
+
     return {
       id: _id.toString(),
       ...rest,
@@ -76,25 +79,21 @@ class SummariesService {
   }
 
   async editSummaryById(id, { title, summary }) {
-    const findSummary = await this._db.collection('summaries').findOne({ _id: new this._ObjectID(id) });
-
-    if (!findSummary) {
-      throw new InvariantError('Failed to update summary. ID not found.');
-    }
-
     const savedAt = new Date().toISOString();
 
-    await this._db.collection('summaries').updateOne({ _id: new this._ObjectID(id) }, { $set: { title, summary, savedAt } });
+    const result = await this._db.collection('summaries').updateOne({ _id: new this._ObjectID(id) }, { $set: { title, summary, savedAt } });
+
+    if (result.modifiedCount === 0) {
+      throw new NotFoundError('Failed to edit summary. Id is not found.');
+    }
   }
 
   async deleteSummaryById(id) {
-    const findSummary = await this._db.collection('summaries').findOne({ _id: new this._ObjectID(id) });
+    const result = await this._db.collection('summaries').deleteOne({ _id: new this._ObjectID(id) });
 
-    if (!findSummary) {
-      throw new InvariantError('Failed to delete summary. ID not found.');
+    if (result.deletedCount === 0) {
+      throw new NotFoundError('Failed to delete summary. Id is not found.');
     }
-
-    await this._db.collection('summaries').deleteOne({ _id: new this._ObjectID(id) });
   }
 }
 
