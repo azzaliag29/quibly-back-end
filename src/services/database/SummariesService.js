@@ -45,7 +45,7 @@ class SummariesService {
       throw new InvariantError('Failed to create summary');
     }
 
-    const id = result.insertedId;
+    const id = result.insertedId.toString();
 
     return {
       id,
@@ -64,6 +64,10 @@ class SummariesService {
   }
 
   async getSummaryById(id) {
+    if (!this._ObjectID.isValid(id)) {
+      throw new InvariantError('Id is not valid.');
+    }
+
     const result = await this._db.collection('summaries').findOne({ _id: new this._ObjectID(id) });
 
     if (!result) {
@@ -79,6 +83,10 @@ class SummariesService {
   }
 
   async editSummaryById(id, { title, summary }) {
+    if (!this._ObjectID.isValid(id)) {
+      throw new InvariantError('Id is not valid.');
+    }
+
     const savedAt = new Date().toISOString();
 
     const result = await this._db.collection('summaries').updateOne({ _id: new this._ObjectID(id) }, { $set: { title, summary, savedAt } });
@@ -89,6 +97,10 @@ class SummariesService {
   }
 
   async deleteSummaryById(id) {
+    if (!this._ObjectID.isValid(id)) {
+      throw new InvariantError('Id is not valid.');
+    }
+
     const result = await this._db.collection('summaries').deleteOne({ _id: new this._ObjectID(id) });
 
     if (result.deletedCount === 0) {
