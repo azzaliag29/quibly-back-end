@@ -35,10 +35,6 @@ class UsersService {
   }
 
   async getUserById(userId) {
-    if (!this._ObjectID.isValid(userId)) {
-      throw new InvariantError('Id is not valid.');
-    }
-
     const query = { _id: new this._ObjectID(userId) };
     const options = {
       projection:
