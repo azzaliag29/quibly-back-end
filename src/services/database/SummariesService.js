@@ -1,7 +1,8 @@
 const pdf = require('pdf-parse');
 const {
-  extractTitleFromText, generateIdSummary, generateEnSummary, generateKeywords,
+  extractTitleFromText, generateIdSummary, generateEnSummary,
 } = require('../../utils');
+const { generateKeywords } = require('../../utils/externalApi');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 const AuthorizationError = require('../../exceptions/AuthorizationError');
@@ -38,7 +39,7 @@ class SummariesService {
       summary = generateEnSummary(parsedText);
     }
 
-    const keywords = generateKeywords(parsedText);
+    const keywords = await generateKeywords({ text: summary });
 
     const newSummary = {
       language, title, originalContent: parsedText, summary, keywords, savedAt, owner,
