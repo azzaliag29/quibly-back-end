@@ -39,7 +39,8 @@ class SummariesService {
       summary = generateEnSummary(parsedText);
     }
 
-    const keywords = await generateKeywords({ text: summary });
+    const keywordsResponse = await generateKeywords({ text: summary });
+    const { keywords } = keywordsResponse;
 
     const newSummary = {
       language, title, originalContent: parsedText, summary, keywords, savedAt, owner,
