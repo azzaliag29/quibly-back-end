@@ -14,4 +14,12 @@ async function generateKeywords({ text }) {
   };
 }
 
-module.exports = { generateKeywords };
+async function generateSummary(text) {
+  const { Client } = await import ('@gradio/client');
+  const app = await Client.connect('khoesan/summarizer-t5');
+
+  const result = await app.predict('/predict', [text]);
+  return result.data[0];
+}
+
+module.exports = { generateKeywords, generateSummary };
