@@ -1,7 +1,5 @@
 const pdf = require('pdf-parse');
-const {
-  extractTitleFromText, generateIdSummary, generateEnSummary,
-} = require('../../utils');
+const extractTitleFromText = require('../../utils');
 const { generateKeywords, generateSummary } = require('../../utils/externalApi');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
