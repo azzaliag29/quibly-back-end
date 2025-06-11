@@ -108,15 +108,10 @@ const init = async () => {
     },
   ]);
 
-  /* Extension function adalah salah satu fitur yang ada di objek server Hapi untuk
-  menambahkan sebuah aksi (berupa fungsi) pada siklus (lifecycle) tertentu. */
-
   server.ext('onPreResponse', (request, h) => {
-    // mendapatkan konteks response dari request
     const { response } = request;
     console.log(response);
     if (response instanceof Error) {
-      // penanganan client error secara internal.
       if (response instanceof ClientError) {
         const newResponse = h.response({
           status: 'fail',
@@ -125,24 +120,21 @@ const init = async () => {
         newResponse.code(response.statusCode);
         return newResponse;
       }
-      // mempertahankan penanganan client error oleh hapi secara native, seperti 404, etc.
       if (!response.isServer) {
         return h.continue;
       }
-      // penanganan server error sesuai kebutuhan
       const newResponse = h.response({
         status: 'error',
-        message: 'terjadi kegagalan pada server kami',
+        message: 'An error occurred on our server.',
       });
       newResponse.code(500);
       return newResponse;
     }
-    // jika bukan error, lanjutkan dengan response sebelumnya (tanpa terintervensi)
     return h.continue;
   });
 
   await server.start();
-  console.log(`Server berjalan pada ${server.info.uri}`);
+  console.log(`Server running on ${server.info.uri}`);
 };
 
 init();

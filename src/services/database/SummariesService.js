@@ -23,10 +23,10 @@ class SummariesService {
 
     if (originalContent instanceof Buffer) {
       const { text, info } = await pdf(originalContent);
-      parsedText = text;
+      parsedText = text.trim();
       title = info?.Title || extractTitleFromText(text);
     } else {
-      parsedText = originalContent;
+      parsedText = originalContent.trim();
       title = extractTitleFromText(originalContent);
     }
 
