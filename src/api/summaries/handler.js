@@ -13,8 +13,11 @@ class SummariesHandler {
   async postSummaryHandler(request, h) {
     this._validator.validatePostSummaryPayload(request.payload);
     const { language, originalContent } = request.payload;
+    const { id: credentialId } = request.auth.credentials;
 
-    const summary = await this._service.createSummary({ language, originalContent });
+    const summary = await this._service.createSummary({
+      language, originalContent, owner: credentialId,
+    });
 
     const response = h.response({
       status: 'success',
@@ -25,8 +28,9 @@ class SummariesHandler {
     return response;
   }
 
-  async getSummariesHandler() {
-    const summaries = await this._service.getSummaries();
+  async getSummariesHandler(request) {
+    const { id: credentialId } = request.auth.credentials;
+    const summaries = await this._service.getSummaries(credentialId);
     return {
       status: 'success',
       data: {
@@ -37,7 +41,11 @@ class SummariesHandler {
 
   async getSummaryByIdHandler(request) {
     const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+
+    await this._service.verifySummaryOwner(id, credentialId);
     const summary = await this._service.getSummaryById(id);
+
     return {
       status: 'success',
       data: {
@@ -49,7 +57,9 @@ class SummariesHandler {
   async putSummaryByIdHandler(request) {
     this._validator.validatePutSummaryPayload(request.payload);
     const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
 
+    await this._service.verifySummaryOwner(id, credentialId);
     await this._service.editSummaryById(id, request.payload);
 
     return {
@@ -60,6 +70,9 @@ class SummariesHandler {
 
   async deleteSummaryByIdHandler(request) {
     const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+
+    await this._service.verifySummaryOwner(id, credentialId);
     await this._service.deleteSummaryById(id);
     return {
       status: 'success',

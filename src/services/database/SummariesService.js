@@ -1,9 +1,9 @@
 const pdf = require('pdf-parse');
-const {
-  extractTitleFromText, generateIdSummary, generateEnSummary, generateKeywords,
-} = require('../../utils');
+const extractTitleFromText = require('../../utils');
+const { generateKeywords, generateSummary } = require('../../utils/externalApi');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
+const AuthorizationError = require('../../exceptions/AuthorizationError');
 
 class SummariesService {
   constructor(db, ObjectID) {
@@ -11,38 +11,37 @@ class SummariesService {
     this._ObjectID = ObjectID;
   }
 
-  // Summary di proses dulu baru di simpan
-  async createSummary({ language, originalContent }) {
+  async createSummary({ language, originalContent, owner }) {
+    if (!owner) {
+      throw new InvariantError('User credential is required.');
+    }
+
     const savedAt = new Date().toISOString();
 
     let parsedText;
     let title;
-    let summary;
 
     if (originalContent instanceof Buffer) {
       const { text, info } = await pdf(originalContent);
-      parsedText = text;
+      parsedText = text.trim();
       title = info?.Title || extractTitleFromText(text);
     } else {
-      parsedText = originalContent;
+      parsedText = originalContent.trim();
       title = extractTitleFromText(originalContent);
     }
 
-    if (language === 'id') {
-      summary = generateIdSummary(parsedText);
-    } else {
-      summary = generateEnSummary(parsedText);
-    }
+    const summary = await generateSummary(parsedText);
 
-    const keywords = generateKeywords(parsedText);
+    const keywordsResponse = await generateKeywords({ text: summary });
+    const { keywords } = keywordsResponse;
 
     const newSummary = {
-      language, title, originalContent: parsedText, summary, keywords, savedAt,
+      language, title, originalContent: parsedText, summary, keywords, savedAt, owner,
     };
 
     const result = await this._db.collection('summaries').insertOne(newSummary);
 
-    if (!result.acknowledged) {
+    if (!result.insertedId) {
       throw new InvariantError('Failed to create summary');
     }
 
@@ -55,8 +54,13 @@ class SummariesService {
     };
   }
 
-  async getSummaries() {
-    const result = await this._db.collection('summaries').find({}).toArray();
+  async getSummaries(owner) {
+    if (!owner) {
+      throw new InvariantError('User credential is required.');
+    }
+
+    const result = await this._db.collection('summaries').find({ owner }).sort({ savedAt: -1 }).toArray();
+
     return result.map(({ _id, ...rest }) => ({
       id: _id.toString(),
       ...rest,
@@ -65,10 +69,13 @@ class SummariesService {
 
   async getSummaryById(id) {
     const result = await this._db.collection('summaries').findOne({ _id: new this._ObjectID(id) });
+
     if (!result) {
       throw new NotFoundError('Summary not found');
     }
+
     const { _id, ...rest } = result;
+
     return {
       id: _id.toString(),
       ...rest,
@@ -76,25 +83,37 @@ class SummariesService {
   }
 
   async editSummaryById(id, { title, summary }) {
-    const findSummary = await this._db.collection('summaries').findOne({ _id: new this._ObjectID(id) });
-
-    if (!findSummary) {
-      throw new InvariantError('Failed to update summary. ID not found.');
-    }
-
     const savedAt = new Date().toISOString();
 
-    await this._db.collection('summaries').updateOne({ _id: new this._ObjectID(id) }, { $set: { title, summary, savedAt } });
+    const result = await this._db.collection('summaries').updateOne({ _id: new this._ObjectID(id) }, { $set: { title, summary, savedAt } });
+
+    if (result.modifiedCount === 0) {
+      throw new NotFoundError('Failed to edit summary. Id is not found.');
+    }
   }
 
   async deleteSummaryById(id) {
-    const findSummary = await this._db.collection('summaries').findOne({ _id: new this._ObjectID(id) });
+    const result = await this._db.collection('summaries').deleteOne({ _id: new this._ObjectID(id) });
 
-    if (!findSummary) {
-      throw new InvariantError('Failed to delete summary. ID not found.');
+    if (result.deletedCount === 0) {
+      throw new NotFoundError('Failed to delete summary. Id is not found.');
+    }
+  }
+
+  async verifySummaryOwner(id, owner) {
+    if (!owner) {
+      throw new InvariantError('User credential is required.');
     }
 
-    await this._db.collection('summaries').deleteOne({ _id: new this._ObjectID(id) });
+    const result = await this._db.collection('summaries').findOne({ _id: new this._ObjectID(id) });
+
+    if (!result) {
+      throw new NotFoundError('Summary not found');
+    }
+
+    if (result.owner !== owner) {
+      throw new AuthorizationError('You are not authorized to access this resource.');
+    }
   }
 }
 
